@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Meanness Counter</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        p { color: #666; margin-bottom: 20px; }
+        .counter { font-size: 4em; font-weight: bold; color: #667eea; margin: 20px 0; }
+        button { padding: 15px 30px; font-size: 1.1em; margin: 10px; cursor: pointer; border: none; border-radius: 10px; background: #667eea; color: white; }
+        button:hover { opacity: 0.9; }
+        .heatmap-section { margin-top: 40px; padding-top: 30px; border-top: 2px solid #eee; }
+        .heatmap-grid { margin: 20px 0; display: inline-block; }
+        .heatmap-row { display: flex; gap: 2px; margin: 2px 0; }
+        .cell { width: 20px; height: 20px; background: #eef0ff; border: 1px solid #ddd; border-radius: 2px; }
+        .cell-1 { background: #c5cde8; }
+        .cell-2 { background: #9dafdd; }
+        .cell-3 { background: #7591d0; }
+        .cell-4 { background: #4d73c3; }
+        .cell-5 { background: #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Brodih Counter</h1>
+        <p>Track instances of meanness</p>
+        <div class="counter" id="count">0</div>
+        <div>
+            <button onclick="increment()">+ Increment</button>
+            <button onclick="reset()">Reset</button>
+        </div>
+        <div class="heatmap-section">
+            <h2>Activity Heatmap (Last 7 Days)</h2>
+            <div id="heatmapGrid" class="heatmap-grid"></div>
+        </div>
+    </div>
+    <script>
+        function increment() {
+            fetch('/api/increment', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('count').textContent = data.meanness;
+                    updateHeatmap();
+                })
+                .catch(e => console.error(e));
+        }
+        function reset() {
+            if (!confirm('Reset counter?')) return;
+            fetch('/api/reset', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('count').textContent = data.meanness;
+                    updateHeatmap();
+                })
+                .catch(e => console.error(e));
+        }
+        function updateHeatmap() {
+            fetch('/api/history')
+                .then(r => r.json())
+                .then(data => renderHeatmap(data.entries))
+                .catch(e => console.error(e));
+        }
+        function renderHeatmap(entries) {
+            const grid = document.getElementById('heatmapGrid');
+            const dayMap = {};
+            const now = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(now);
+                d.setDate(d.getDate() - i);
+                const key = d.toISOString().split('T')[0];
+                dayMap[key] = {};
+                for (let h = 0; h < 24; h++) dayMap[key][h] = 0;
+            }
+            entries.forEach(e => {
+                const d = new Date(e.timestamp);
+                const key = d.toISOString().split('T')[0];
+                const h = d.getHours();
+                if (dayMap[key]) dayMap[key][h]++;
+            });
+            grid.innerHTML = '';
+            Object.keys(dayMap).sort().forEach(day => {
+                const row = document.createElement('div');
+                row.className = 'heatmap-row';
+                for (let h = 0; h < 24; h++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    const count = dayMap[day][h];
+                    if (count > 0) cell.classList.add('cell-' + Math.min(count, 5));
+                    cell.title = `${day} ${h}:00 - ${count} inc`;
+                    row.appendChild(cell);
+                }
+                grid.appendChild(row);
+            });
+        }
+        // Load initial data
+        fetch('/api/count').then(r => r.json()).then(data => {
+            document.getElementById('count').textContent = data.meanness;
+        });
+        updateHeatmap();
+        setInterval(updateHeatmap, 2000);
+    </script>
+</body>
+</html>
