@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meanness Counter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .counter-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 4em;
+            font-weight: bold;
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .counter-display:hover {
+            transform: scale(1.05);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .increment-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .increment-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .increment-btn:active {
+            transform: translateY(0);
+        }
+
+        .reset-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .reset-btn:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .status.error {
+            color: #e74c3c;
+        }
+
+        .status.loading {
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Brodih Counter</h1>
+        <p class="subtitle">Track instances of meanness</p>
+        
+        <div class="counter-display" id="counterDisplay">0</div>
+        
+        <div class="button-group">
+            <button class="increment-btn" onclick="incrementCounter()">+ Increment</button>
+            <button class="reset-btn" onclick="resetCounter()">Reset Counter</button>
+        </div>
+        
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        // Load counter on page load
+        window.addEventListener('load', loadCounter);
+
+        async function loadCounter() {
+            try {
+                const response = await fetch('/api/count');
+                const data = await response.json();
+                document.getElementById('counterDisplay').textContent = data.meanness;
+                document.getElementById('status').textContent = '';
+            } catch (error) {
+                console.error('Error loading counter:', error);
+                document.getElementById('status').textContent = 'Error loading counter';
+                document.getElementById('status').classList.add('error');
+            }
+        }
+
+        async function incrementCounter() {
+            try {
+                document.getElementById('status').textContent = 'Updating...';
+                document.getElementById('status').classList.remove('error');
+                document.getElementById('status').classList.add('loading');
+
+                const response = await fetch('/api/increment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                document.getElementById('counterDisplay').textContent = data.meanness;
+                document.getElementById('status').textContent = '';
+                document.getElementById('status').classList.remove('loading');
+            } catch (error) {
+                console.error('Error incrementing counter:', error);
+                document.getElementById('status').textContent = 'Error incrementing counter';
+                document.getElementById('status').classList.add('error');
+            }
+        }
+
+        async function resetCounter() {
+            if (confirm('Are you sure you want to reset the counter?')) {
+                // Send request to reset (would need backend endpoint)
+                document.getElementById('counterDisplay').textContent = '0';
+                document.getElementById('status').textContent = 'Counter reset (note: page refresh required to persist)';
+            }
+        }
+    </script>
+</body>
+</html>
