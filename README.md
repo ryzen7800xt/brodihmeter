@@ -23,7 +23,7 @@ A fun and simple **Meanness Counter** web application to track instances of mean
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/brodihmeter.git
+   git clone https://github.com/ryzen7800xt/brodihmeter.git
    cd brodihmeter/src
    ```
 
